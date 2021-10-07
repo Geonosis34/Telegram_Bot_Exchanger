@@ -1,0 +1,31 @@
+import json
+import requests
+from config import *
+
+
+class ApiException(Exception):
+    pass
+
+
+class Convertor:
+    @staticmethod
+    def get_price(base, sym, amount):
+        try:
+            base_key = exchanges[base.lower()]
+        except KeyError:
+            return ApiException(f'Валюта {base} не найдена ERROR')
+        try:
+            sym_key = exchanges[sym.lower()]
+        except KeyError:
+            raise ApiException(f'Валюта {sym} не найдена ERROR')
+        if base_key == sym_key:
+            raise ApiException(f'Невозможно перевести одинаковые валюты {base} ERROR')
+        try:
+            amount = float(amount.replace(',', '.'))
+        except ValueError:
+            raise ApiException(f'Не удалось обработать количество {amount} ERROR')
+
+        r = requests.get(f"http://api.exchangeratesapi.io/v1/latest?access_key=9c17cffba4ce5f0cd475b3c031e6c4a4&format=1?base={base_key}&symbols={sym_key}")
+        resp = json.loads(r.content)
+        new_price = resp['rates'][sym_key] * float(amount)
+        return new_price
